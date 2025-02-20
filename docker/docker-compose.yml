@@ -1,0 +1,7 @@
+services:
+  ubuntu:
+    image: ubuntu:20.04
+    container_name: ubuntu_container
+    tty: true
+    volumes:
+      - ../:/home/workspace
