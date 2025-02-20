@@ -5,8 +5,8 @@
 
 // Function to print a hello message using the user's information
 void print_hello_message(USER_RECORD *this_user) {
-    printf("Hello, %s %s! You are %d years old and your gender is %c.\n", 
-           this_user->first_name, this_user->last_name, 
+    printf("Hello, %s %s! You are %d years old and your gender is %c.\n",
+           this_user->first_name, this_user->last_name,
            this_user->age, this_user->gender);
 }
 

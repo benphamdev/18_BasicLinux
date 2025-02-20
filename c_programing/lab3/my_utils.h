@@ -9,11 +9,21 @@ typedef struct {
     int age;               // Age of the user in years
 } USER_RECORD;
 
+/**
+    * Function to print a hello message using a USER_RECORD
+    * @param this_user Pointer to a USER_RECORD structure
+    * @return void
+*/
 // Function to print a hello message using a USER_RECORD
 void print_hello_message(USER_RECORD *this_user);
 
+
+/**
+    * Function to remove the newline character from a string
+    * @param s Pointer to a string
+    * @return Pointer to the modified string
+*/
 // Function to remove the newline character from a string
 char *remove_newline(char *s);
 
 #endif
-
