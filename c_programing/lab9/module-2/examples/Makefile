@@ -8,12 +8,12 @@ LDLIBS=
 CC=gcc
 
 ifeq ($(DEBUG), y)
-	CFLAGS += -g 
+	CFLAGS += -g
 else
 	CFLAGS += -O2
 endif
 
-.PHONY: all clean 
+.PHONY: all clean
 
 SRCS=$(wildcard src/*.c)
 OBJS=$(SRCS:src/%.c=obj/%.o)
