@@ -21,7 +21,9 @@
   - [Memory Management](#memory-management)
   - [Directory Management](#directory-management)
   - [Networking](#networking)
-  -
+  - [Thread Management](#thread-management)
+  - [File Permission Handling](#file-permission-handling)
+  - [Asynchronous I/O](#asynchronous-io)
 - [Error Handling](#error-handling)
 
 ## 📋 Overview
