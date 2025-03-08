@@ -354,6 +354,21 @@ void demo_pipe_operations() {
     }
 }
 
+void diplay_menu() {
+    print_message("\n------ DEMO MENU ------\n");
+    print_message("1. File Operations Demo\n");
+    print_message("2. Process Operations Demo\n");
+    print_message("3. Directory Operations Demo\n");
+    print_message("4. Pipe Operations Demo\n");
+    print_message("5. Time Operations Demo\n");
+    print_message("6. Signal Handling Demo\n");
+    print_message("7. Memory Management Demo\n");
+    print_message("8. File Permission Demo\n");
+    print_message("9. Basic I/O Demo\n");
+    print_message("0. Exit Program\n");
+    print_message("----------------------\n");
+    print_message("Enter your choice: ");
+}
 
 int main() {
     int choice = 0;
@@ -365,19 +380,7 @@ int main() {
     
     while (1) {
         // Display menu
-        print_message("\n------ DEMO MENU ------\n");
-        print_message("1. File Operations Demo\n");
-        print_message("2. Process Operations Demo\n");
-        print_message("3. Directory Operations Demo\n");
-        print_message("4. Pipe Operations Demo\n");
-        print_message("5. Time Operations Demo\n");
-        print_message("6. Signal Handling Demo\n");
-        print_message("7. Memory Management Demo\n");
-        print_message("8. File Permission Demo\n");
-        print_message("9. Basic I/O Demo\n");
-        print_message("0. Exit Program\n");
-        print_message("----------------------\n");
-        print_message("Enter your choice: ");
+        diplay_menu();
         
         // Read user input
         if (fgets(input, sizeof(input), stdin) == NULL) {
