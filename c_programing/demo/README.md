@@ -29,6 +29,7 @@
 ## 📋 Overview
 
 This project demonstrates how to create a custom system call library and an application that uses it. The library provides a clean, consistent interface to Linux system calls, making system-level programming more accessible and maintainable.
+(xây dựng 1 thư viện các lời gọi hệ thống và ứng dụng).
 
 ## 🏗️ Project Structure
 
@@ -122,13 +123,13 @@ Functions for file I/O operations:
 
 Functions for creating and controlling processes:
 
-| Function                                             | Description                                 |
-| ---------------------------------------------------- | ------------------------------------------- |
-| `pid_t sys_fork()`                                   | Creates a child process                     |
-| `int sys_exec(const char *path, char *const argv[])` | Replaces current process with a new program |
-| `pid_t sys_wait(int *status)`                        | Waits for a child process to terminate      |
-| `int sys_exit(int status)`                           | Terminates the current process              |
-| `pid_t sys_getpid()`                                 | Gets the process ID of the current process  |
+| Function                                                                    | Description                                |
+| --------------------------------------------------------------------------- | ------------------------------------------ |
+| `pid_t sys_fork()`                                                          | Creates a child process                    |
+| `pid_t sys_wait(int *status)`                                               | Waits for a child process to terminate     |
+| `int sys_exit(int status)`                                                  | Terminates the current process             |
+| `pid_t sys_getpid()`                                                        | Gets the process ID of the current process |
+| `int sys_execve(const char *path, char *const argv[], char *const envp[]);` | Executes a new program                     |
 
 > **Use Case**: Running multiple processes, executing shell commands from C programs.
 
@@ -136,11 +137,11 @@ Functions for creating and controlling processes:
 
 Functions for inter-process communication via signals:
 
-| Function                                            | Description                                   |
-| --------------------------------------------------- | --------------------------------------------- |
-| `int sys_kill(pid_t pid, int sig)`                  | Sends a signal to a process                   |
-| `void sys_signal(int signum, void (*handler)(int))` | Sets a handler for a signal                   |
-| `int sys_pause()`                                   | Suspends execution until a signal is received |
+| Function                                                                               | Description                                   |
+| -------------------------------------------------------------------------------------- | --------------------------------------------- |
+| `int sys_kill(pid_t pid, int sig)`                                                     | Sends a signal to a process                   |
+| `int sys_pause()`                                                                      | Suspends execution until a signal is received |
+| `int sys_sigaction(int signum, const struct sigaction *act, struct sigaction*oldact);` | Sets signal handling for a process            |
 
 > **Use Case**: Handling interruptions (SIGINT), stopping or killing processes.
 
@@ -160,12 +161,11 @@ Functions for efficient memory allocation:
 
 Functions to handle directories and file system structure:
 
-| Function                                       | Description                        |
-| ---------------------------------------------- | ---------------------------------- |
-| `int sys_mkdir(const char *path, mode_t mode)` | Creates a new directory            |
-| `int sys_rmdir(const char *path)`              | Removes a directory                |
-| `int sys_chdir(const char *path)`              | Changes the working directory      |
-| `char *sys_getcwd(char *buffer, size_t size)`  | Gets the current working directory |
+| Function                                       | Description                   |
+| ---------------------------------------------- | ----------------------------- |
+| `int sys_mkdir(const char *path, mode_t mode)` | Creates a new directory       |
+| `int sys_rmdir(const char *path)`              | Removes a directory           |
+| `int sys_chdir(const char *path)`              | Changes the working directory |
 
 > **Use Case**: Creating and managing directory structures for applications.
 
@@ -189,29 +189,38 @@ Functions for socket programming and network communication:
 
 Functions for creating and managing threads:
 
-| Function                                                                                                            | Description                   |
-| ------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| `int sys_pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg)` | Creates a new thread          |
-| `int sys_pthread_join(pthread_t thread, void **retval)`                                                             | Waits for thread termination  |
-| `int sys_pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)`                               | Initializes a mutex           |
-| `int sys_pthread_mutex_lock(pthread_mutex_t *mutex)`                                                                | Locks a mutex                 |
-| `int sys_pthread_mutex_unlock(pthread_mutex_t *mutex)`                                                              | Unlocks a mutex               |
-| `int sys_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)`                                           | Waits on a condition variable |
-| `int sys_pthread_cond_signal(pthread_cond_t *cond)`                                                                 | Signals a condition variable  |
+| Function                                                                                                   | Description                                    |
+| ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `int sys_clone(int (*fn)(void *), void *stack, int flags, void *arg);`                                     | Creates a new thread using `clone` system call |
+| `int sys_futex(int *uaddr, int futex_op, int val, const struct timespec *timeout, int *uaddr2, int val3);` | Fast userspace mutex for synchronization       |
 
 > **Use Case**: Implementing multi-threaded applications for concurrent processing and responsive UIs.
+
+### Time Management
+
+| Function                                                               | Description                             |
+| ---------------------------------------------------------------------- | --------------------------------------- |
+| `int sys_gettimeofday(struct timeval *tv, struct timezone *tz);`       | Gets the current time of day            |
+| `int sys_nanosleep(const struct timespec *req, struct timespec *rem);` | Suspends execution for a specified time |
+
+### Resource Management
+
+| Function                                                       | Description                        |
+| -------------------------------------------------------------- | ---------------------------------- |
+| `int sys_getrlimit(int resource, struct rlimit \*rlim);`       | Gets resource limits for a process |
+| `int sys_setrlimit(int resource, const struct rlimit \*rlim);` | Sets resource limits for a process |
 
 ### File Permission Handling
 
 Functions to manage file permissions and ownership:
 
-| Function                                                    | Description                          |
-| ----------------------------------------------------------- | ------------------------------------ |
-| `int sys_chmod(const char *path, mode_t mode)`              | Changes file permissions             |
-| `int sys_chown(const char *path, uid_t owner, gid_t group)` | Changes file owner and group         |
-| `int sys_access(const char *path, int mode)`                | Checks file accessibility            |
-| `int sys_umask(mode_t mask)`                                | Sets file mode creation mask         |
-| `int sys_getumask(void)`                                    | Gets current file mode creation mask |
+| Function                                                    | Description                  |
+| ----------------------------------------------------------- | ---------------------------- |
+| `int sys_chmod(const char *path, mode_t mode)`              | Changes file permissions     |
+| `int sys_chown(const char *path, uid_t owner, gid_t group)` | Changes file owner and group |
+| `int sys_access(const char *path, int mode)`                | Checks file accessibility    |
+| `int sys_umask(mode_t mask)`                                | Sets file mode creation mask |
+| `mode_t sys_getumask()`                                     | Gets the current umask value |
 
 > **Use Case**: Implementing secure file operations with proper permissions management.
 
@@ -229,6 +238,15 @@ Functions for non-blocking file operations:
 | `int sys_aio_cancel(int fd, struct aiocb *aiocbp)`                                                | Cancels an outstanding asynchronous I/O request   |
 
 > **Use Case**: Implementing high-performance I/O operations without blocking the main thread, especially useful for applications handling multiple files simultaneously.
+
+### Inter-Process Communication (IPC)
+
+| Function                                                       | Description                                    |
+| -------------------------------------------------------------- | ---------------------------------------------- |
+| `int sys_pipe(int pipefd[2]);`                                 | Creates a pipe for inter-process communication |
+| `int sys_shmget(key_t key, size_t size, int shmflg);`          | Allocates a shared memory segment              |
+| `void *sys_shmat(int shmid, const void *shmaddr, int shmflg);` | Attaches a shared memory segment               |
+| `int sys_shmdt(const void *shmaddr);`                          | Detaches a shared memory segment               |
 
 ## ⚠️ Error Handling
 
