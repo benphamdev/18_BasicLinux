@@ -22,8 +22,11 @@
   - [Directory Management](#directory-management)
   - [Networking](#networking)
   - [Thread Management](#thread-management)
+  - [Time Management](#time-management)
+  - [Resource Management](#resource-management)
   - [File Permission Handling](#file-permission-handling)
   - [Asynchronous I/O](#asynchronous-io)
+  - [Inter-Process Communication (IPC)](#inter-process-communication-ipc)
 - [Error Handling](#error-handling)
 
 ## 📋 Overview

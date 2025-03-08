@@ -5,6 +5,7 @@ CC=gcc
 CFLAGS=-Wall -Wextra -fPIC -Ilib
 LDFLAGS=-shared
 RPATH=-Wl,-rpath,'$$ORIGIN/../lib'
+LIBS=-lpthread -lrt
 
 # Directory variables
 LIB_DIR=lib
@@ -35,7 +36,7 @@ all: $(LIBNAME) $(BIN_DIR)/main
 
 # Create the library
 $(LIBNAME): $(LIB_OBJ)
-	$(CC) $(LDFLAGS) -o $@ $<
+	$(CC) $(LDFLAGS) -o $@ $< $(LIBS)
 
 # Compile library object file
 $(LIB_OBJ): $(LIB_SRC) $(LIB_DIR)/syscalls.h
@@ -47,14 +48,14 @@ $(APP_OBJ): $(APP_SRC) $(LIB_DIR)/syscalls.h
 
 # Create the main executable
 $(BIN_DIR)/main: $(APP_OBJ) $(LIBNAME)
-	$(CC) -o $@ $< -L$(LIB_DIR) -lsyscalls $(RPATH)
+	$(CC) -o $@ $< -L$(LIB_DIR) -lsyscalls $(RPATH) $(LIBS)
 
 clean:
-	rm -f $(OBJ_DIR)/*.o $(LIBNAME) $(BIN_DIR)/*
+	rm -f $(OBJ_DIR)/*.o $(LIBNAME) $(BIN_DIR)/* testfile.txt
 
 help:
 	@echo "make: compile the library and the main application"
-	@echo "make clean: remove object files"
+	@echo "make clean: remove object files and generated files"
 	@echo "make help: display this message"
 	@echo "DEBUG=y make: compile with debugging support"
 
