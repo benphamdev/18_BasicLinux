@@ -27,6 +27,14 @@
   - [File Permission Handling](#file-permission-handling)
   - [Asynchronous I/O](#asynchronous-io)
   - [Inter-Process Communication (IPC)](#inter-process-communication-ipc)
+  - [Terminal I/O](#terminal-io)
+  - [Message Queues](#message-queues)
+  - [Semaphores](#semaphores)
+  - [Event Monitoring](#event-monitoring)
+  - [File Monitoring](#file-monitoring)
+  - [Process Scheduling](#process-scheduling)
+  - [Process Control](#process-control)
+  - [Capabilities](#capabilities)
 - [Error Handling](#error-handling)
 
 ## 📋 Overview
@@ -250,6 +258,116 @@ Functions for non-blocking file operations:
 | `int sys_shmget(key_t key, size_t size, int shmflg);`          | Allocates a shared memory segment              |
 | `void *sys_shmat(int shmid, const void *shmaddr, int shmflg);` | Attaches a shared memory segment               |
 | `int sys_shmdt(const void *shmaddr);`                          | Detaches a shared memory segment               |
+
+### Terminal I/O
+
+Functions for terminal device manipulation:
+
+| Function                                                                           | Description                       |
+| ---------------------------------------------------------------------------------- | --------------------------------- |
+| `int sys_tcgetattr(int fd, struct termios *termios_p)`                             | Gets terminal attributes          |
+| `int sys_tcsetattr(int fd, int optional_actions, const struct termios *termios_p)` | Sets terminal attributes          |
+| `int sys_tcsendbreak(int fd, int duration)`                                        | Sends a break condition           |
+| `int sys_tcflush(int fd, int queue_selector)`                                      | Flushes terminal I/O buffer       |
+| `int sys_ioctl(int fd, unsigned long request, void *arg)`                          | Controls device parameters        |
+| `int sys_isatty(int fd)`                                                           | Tests if file descriptor is a TTY |
+
+> **Use Case**: Creating console applications with custom input handling, implementing terminal-based UIs, or setting raw mode for games.
+
+### Message Queues
+
+Functions for POSIX message queue operations:
+
+| Function                                                                                  | Description                   |
+| ----------------------------------------------------------------------------------------- | ----------------------------- |
+| `mqd_t sys_mq_open(const char *name, int oflag, mode_t mode, struct mq_attr *attr)`       | Opens a message queue         |
+| `int sys_mq_close(mqd_t mqdes)`                                                           | Closes a message queue        |
+| `int sys_mq_unlink(const char *name)`                                                     | Removes a message queue       |
+| `int sys_mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned int prio)`    | Sends a message               |
+| `ssize_t sys_mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned int *prio)`  | Receives a message            |
+| `int sys_mq_getattr(mqd_t mqdes, struct mq_attr *attr)`                                   | Gets message queue attributes |
+| `int sys_mq_setattr(mqd_t mqdes, const struct mq_attr *newattr, struct mq_attr *oldattr)` | Sets message queue attributes |
+
+> **Use Case**: Implementing reliable inter-process communication with priority support.
+
+### Semaphores
+
+Functions for POSIX semaphore operations:
+
+| Function                                                                            | Description                              |
+| ----------------------------------------------------------------------------------- | ---------------------------------------- |
+| `sem_t *sys_sem_open(const char *name, int oflag, mode_t mode, unsigned int value)` | Opens a named semaphore                  |
+| `int sys_sem_close(sem_t *sem)`                                                     | Closes a semaphore                       |
+| `int sys_sem_unlink(const char *name)`                                              | Removes a named semaphore                |
+| `int sys_sem_wait(sem_t *sem)`                                                      | Locks a semaphore                        |
+| `int sys_sem_trywait(sem_t *sem)`                                                   | Non-blocking attempt to lock a semaphore |
+| `int sys_sem_post(sem_t *sem)`                                                      | Unlocks a semaphore                      |
+| `int sys_sem_getvalue(sem_t *sem, int *sval)`                                       | Gets semaphore value                     |
+
+> **Use Case**: Synchronizing access to shared resources between processes.
+
+### Event Monitoring
+
+Functions for monitoring file descriptors for events:
+
+| Function                                                                                             | Description                                                 |
+| ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `int sys_poll(struct pollfd *fds, nfds_t nfds, int timeout)`                                         | Waits for events on multiple file descriptors               |
+| `int sys_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *tv)` | Monitors multiple file descriptors for readiness            |
+| `int sys_epoll_create(int size)`                                                                     | Creates an epoll instance (scalable I/O event notification) |
+| `int sys_epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)`                             | Controls epoll instance                                     |
+| `int sys_epoll_wait(int epfd, struct epoll_event *events, int maxevents, int timeout)`               | Waits for events on an epoll instance                       |
+
+> **Use Case**: Building high-performance servers that handle multiple connections efficiently.
+
+### File Monitoring
+
+Functions for monitoring file system events:
+
+| Function                                                             | Description                              |
+| -------------------------------------------------------------------- | ---------------------------------------- |
+| `int sys_inotify_init(void)`                                         | Initializes a new inotify instance       |
+| `int sys_inotify_add_watch(int fd, const char *path, uint32_t mask)` | Adds a watch to an inotify instance      |
+| `int sys_inotify_rm_watch(int fd, int wd)`                           | Removes a watch from an inotify instance |
+
+> **Use Case**: File system event monitoring for auto-reload functionality in applications, implementing backup systems, or file synchronization tools.
+
+### Process Scheduling
+
+Functions for controlling process scheduling attributes:
+
+| Function                                                                             | Description                           |
+| ------------------------------------------------------------------------------------ | ------------------------------------- |
+| `int sys_sched_get_priority_max(int policy)`                                         | Gets maximum scheduling priority      |
+| `int sys_sched_get_priority_min(int policy)`                                         | Gets minimum scheduling priority      |
+| `int sys_sched_setscheduler(pid_t pid, int policy, const struct sched_param *param)` | Sets scheduling policy and parameters |
+| `int sys_sched_getscheduler(pid_t pid)`                                              | Gets scheduling policy                |
+| `int sys_sched_setparam(pid_t pid, const struct sched_param *param)`                 | Sets scheduling parameters            |
+| `int sys_sched_getparam(pid_t pid, struct sched_param *param)`                       | Gets scheduling parameters            |
+| `int sys_sched_yield(void)`                                                          | Yields processor voluntarily          |
+
+> **Use Case**: Implementing real-time applications, prioritizing critical tasks, or optimizing CPU utilization in multi-threaded applications.
+
+### Process Control
+
+Functions for advanced process control:
+
+| Function                                                                                                    | Description                 |
+| ----------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `int sys_prctl(int option, unsigned long arg2, unsigned long arg3, unsigned long arg4, unsigned long arg5)` | Controls process attributes |
+
+> **Use Case**: Setting process name, controlling core dumps, managing security-related process attributes.
+
+### Capabilities
+
+Functions for Linux capabilities (fine-grained privileges):
+
+| Function                                                              | Description               |
+| --------------------------------------------------------------------- | ------------------------- |
+| `int sys_capget(cap_user_header_t hdrp, cap_user_data_t datap)`       | Gets process capabilities |
+| `int sys_capset(cap_user_header_t hdrp, const cap_user_data_t datap)` | Sets process capabilities |
+
+> **Use Case**: Implementing principle of least privilege in security-sensitive applications.
 
 ## ⚠️ Error Handling
 

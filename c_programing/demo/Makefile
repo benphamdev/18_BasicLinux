@@ -2,10 +2,17 @@
 DEBUG=n
 
 CC=gcc
-CFLAGS=-Wall -Wextra -fPIC -Ilib
+CFLAGS=-Wall -Wextra -fPIC -Ilib -D_GNU_SOURCE
 LDFLAGS=-shared
 RPATH=-Wl,-rpath,'$$ORIGIN/../lib'
 LIBS=-lpthread -lrt
+
+# Check for capability support - we'll auto-detect if the header exists
+CAP_CHECK := $(shell echo "\#include <sys/capability.h>" | $(CC) -E - >/dev/null 2>&1 && echo "y" || echo "n")
+ifeq ($(CAP_CHECK), y)
+    CFLAGS += -DHAVE_SYS_CAPABILITY_H
+    LIBS += -lcap
+endif
 
 # Directory variables
 LIB_DIR=lib
