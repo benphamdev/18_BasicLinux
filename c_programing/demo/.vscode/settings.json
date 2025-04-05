@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "*.cpp": "cpp",
+    "*.js": "javascriptreact",
+    "syscalls.h": "c"
+  }
+}
