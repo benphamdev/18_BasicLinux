@@ -1,5 +1,5 @@
-#include "demos.h"
-#include "../lib/syscalls.h"
+#include "../../include/demos.h"
+#include "../../include/syscalls.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

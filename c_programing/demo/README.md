@@ -9,9 +9,12 @@
 
 - [Overview](#overview)
 - [Project Structure](#project-structure)
+- [Dependencies](#dependencies)
 - [Building Instructions](#building-instructions)
   - [Building the Library](#building-the-library)
   - [Building the Application](#building-the-application)
+  - [Building the Web Interface](#building-the-web-interface)
+- [Running the Web Server](#running-the-web-server)
 - [Example Usage](#example-usage)
 - [Supported System Calls](#supported-system-calls)
 - [Library Functionalities](#library-functionalities)
@@ -46,17 +49,40 @@ This project demonstrates how to create a custom system call library and an appl
 
 ```
 demo/
-├── lib/
-│   ├── syscall.h
-│   └── syscall.c
-├── app/
-│   └── main.c
-├── bin/
-│   └── main.c
-├── obj/
-│   └── main.c
-└── Makefile
-└── README.md
+├── include/           # Header files
+│   ├── demos.h
+│   ├── syscalls.h
+│   └── web_server.h
+├── src/               # Source files
+│   ├── main.c         # Main application entry point
+│   ├── web_main.c     # Web server entry point
+│   ├── core/          # Core functionality
+│   │   └── demos.c    # Demo implementations
+│   ├── infrastructure/
+│   │   └── syscalls.c # System call wrappers
+│   └── interfaces/
+│       └── web_server.c # Web interface
+├── build/             # Build artifacts
+│   ├── bin/           # Executables
+│   └── obj/           # Object files
+├── data/              # Data files
+│   └── test.txt
+├── web/               # Web interface files
+│   ├── assets/
+│   ├── css/
+│   ├── js/
+│   └── templates/
+├── Makefile           # Build automation
+└── README.md          # Documentation
+```
+
+## 📦 Dependencies
+
+Before building the project, ensure you have the required dependencies:
+
+```bash
+# Install libmicrohttpd for the web interface
+sudo apt-get install pkg-config libmicrohttpd-dev
 ```
 
 ## 🔧 Building Instructions
@@ -81,6 +107,28 @@ cd ../app
 # Compile the application
 gcc -o app main.c -L../lib -lsyscall
 ```
+
+### Building the Web Interface
+
+You can build the entire project including the web interface with a single command:
+
+```bash
+# Build everything (library, application, and web interface)
+make
+
+# Or to build just the web interface
+make web
+```
+
+## 🌐 Running the Web Server
+
+After building the project, you can run the web server with:
+
+```bash
+./build/bin/web_server
+```
+
+The server will start and you can access the web interface by navigating to <http://localhost:8000> in your web browser.
 
 ## 🚀 Example Usage
 

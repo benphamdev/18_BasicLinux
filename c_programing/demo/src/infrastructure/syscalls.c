@@ -1,4 +1,4 @@
-#include "syscalls.h"
+#include "../../include/syscalls.h"
 #include <string.h>  // Add this for strlen()
 
 void print_message(const char *message) {

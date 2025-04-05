@@ -1,11 +1,32 @@
 # change to y to enable debugging support
 DEBUG=n
 
+# Directory variables
+BUILD_DIR=build
+BIN_DIR=$(BUILD_DIR)/bin
+OBJ_DIR=$(BUILD_DIR)/obj
+INCLUDE_DIR=include
+SRC_DIR=src
+
+# Create directories if they don't exist
+$(shell mkdir -p $(OBJ_DIR) $(BIN_DIR))
+
+# Create subdirectories for object files
+$(shell mkdir -p $(OBJ_DIR)/infrastructure $(OBJ_DIR)/core $(OBJ_DIR)/interfaces)
+
+# Compiler flags
 CC=gcc
-CFLAGS=-Wall -Wextra -fPIC -Ilib -D_GNU_SOURCE
+CFLAGS=-I$(INCLUDE_DIR) -Wall -Wextra -fPIC -D_GNU_SOURCE
 LDFLAGS=-shared
-RPATH=-Wl,-rpath,'$$ORIGIN/../lib'
+RPATH=-Wl,-rpath,'$$ORIGIN/../../src/interfaces'
 LIBS=-lpthread -lrt
+
+# Debug configuration
+ifeq ($(DEBUG), y)
+	CFLAGS += -g
+else
+	CFLAGS += -O2
+endif
 
 # Check for capability support - we'll auto-detect if the header exists
 CAP_CHECK := $(shell echo "\#include <sys/capability.h>" | $(CC) -E - >/dev/null 2>&1 && echo "y" || echo "n")
@@ -31,91 +52,81 @@ else
 	$(warning "pkg-config not found. Cannot check for libmicrohttpd.")
 endif
 
-# Directory variables
-LIB_DIR=lib
-APP_DIR=app
-OBJ_DIR=obj
-BIN_DIR=bin
-SRC_DIR=src
-WEB_DIR=web
+# Source files
+CORE_SRCS=$(wildcard $(SRC_DIR)/core/*.c)
+INFRA_SRCS=$(wildcard $(SRC_DIR)/infrastructure/*.c)
+INTERFACE_SRCS=$(wildcard $(SRC_DIR)/interfaces/*.c)
+MAIN_SRC=$(SRC_DIR)/main.c
+WEB_MAIN_SRC=$(SRC_DIR)/web_main.c
 
-# Create directories if they don't exist
-$(shell mkdir -p $(LIB_DIR) $(APP_DIR) $(OBJ_DIR) $(BIN_DIR) $(SRC_DIR) $(WEB_DIR))
+# Object files
+CORE_OBJS=$(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(CORE_SRCS))
+INFRA_OBJS=$(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(INFRA_SRCS))
+INTERFACE_OBJS=$(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(INTERFACE_SRCS))
+MAIN_OBJ=$(OBJ_DIR)/main.o
+WEB_MAIN_OBJ=$(OBJ_DIR)/web_main.o
 
-# Source and object files
-LIB_SRC=$(LIB_DIR)/syscalls.c
-APP_SRC=$(APP_DIR)/main.c
-LIB_OBJ=$(OBJ_DIR)/syscalls.o
-APP_OBJ=$(OBJ_DIR)/main.o
+# Library output
+SYSCALLS_LIB=$(SRC_DIR)/interfaces/libsyscalls.so
 
-# Demos source and object
-DEMOS_SRC=$(SRC_DIR)/demos.c
-DEMOS_OBJ=$(OBJ_DIR)/demos.o
-
-# Web server source and objects
-WEB_SERVER_SRC=$(SRC_DIR)/web_server.c
-WEB_APP_SRC=$(APP_DIR)/web_main.c
-WEB_SERVER_OBJ=$(OBJ_DIR)/web_server.o
-WEB_APP_OBJ=$(OBJ_DIR)/web_main.o
-
-# Library name
-LIBNAME=$(LIB_DIR)/libsyscalls.so
-
-ifeq ($(DEBUG), y)
-	CFLAGS += -g
-else
-	CFLAGS += -O2
-endif
+# Main executables
+MAIN_APP=$(BIN_DIR)/main
+WEB_APP=$(BIN_DIR)/web_server
 
 # Default target
-all: $(LIBNAME) $(BIN_DIR)/main
+all: $(SYSCALLS_LIB) $(MAIN_APP)
+ifeq ($(MHD_CHECK), y)
+all: $(WEB_APP)
+endif
 
-# Create the library
-$(LIBNAME): $(LIB_OBJ)
-	$(CC) $(LDFLAGS) -o $@ $< $(LIBS)
+# Create the syscalls library
+$(SYSCALLS_LIB): $(INFRA_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-# Compile library object file
-$(LIB_OBJ): $(LIB_SRC) $(LIB_DIR)/syscalls.h
+# Compile main.c
+$(MAIN_OBJ): $(MAIN_SRC)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Compile demos object file
-$(DEMOS_OBJ): $(DEMOS_SRC) $(SRC_DIR)/demos.h $(LIB_DIR)/syscalls.h
+# Compile web_main.c
+$(WEB_MAIN_OBJ): $(WEB_MAIN_SRC)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Compile main application object file
-$(APP_OBJ): $(APP_SRC) $(LIB_DIR)/syscalls.h $(SRC_DIR)/demos.h
+# Pattern rule for core objects
+$(OBJ_DIR)/core/%.o: $(SRC_DIR)/core/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Compile web server object file
-$(WEB_SERVER_OBJ): $(WEB_SERVER_SRC) $(SRC_DIR)/web_server.h $(LIB_DIR)/syscalls.h $(SRC_DIR)/demos.h
+# Pattern rule for infrastructure objects
+$(OBJ_DIR)/infrastructure/%.o: $(SRC_DIR)/infrastructure/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Compile web application object file
-$(WEB_APP_OBJ): $(WEB_APP_SRC) $(SRC_DIR)/web_server.h $(LIB_DIR)/syscalls.h
+# Pattern rule for interface objects
+$(OBJ_DIR)/interfaces/%.o: $(SRC_DIR)/interfaces/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Create the main executable - ensure DEMOS_OBJ exists before building main
-$(BIN_DIR)/main: $(APP_OBJ) $(DEMOS_OBJ) $(LIBNAME)
-	$(CC) -o $@ $(APP_OBJ) $(DEMOS_OBJ) -L$(LIB_DIR) -lsyscalls $(RPATH) $(LIBS)
+# Create the main executable
+$(MAIN_APP): $(MAIN_OBJ) $(CORE_OBJS) $(SYSCALLS_LIB)
+	$(CC) -o $@ $(MAIN_OBJ) $(CORE_OBJS) -L$(SRC_DIR)/interfaces -lsyscalls $(RPATH) $(LIBS)
 
 # Build the web interface if libmicrohttpd is available
 ifeq ($(MHD_CHECK), y)
-all: $(BIN_DIR)/web_server
-
-$(BIN_DIR)/web_server: $(WEB_SERVER_OBJ) $(WEB_APP_OBJ) $(DEMOS_OBJ) $(LIBNAME)
-	$(CC) -o $@ $(WEB_SERVER_OBJ) $(WEB_APP_OBJ) $(DEMOS_OBJ) -L$(LIB_DIR) -lsyscalls $(RPATH) $(LIBS) $(WEB_LIBS)
+$(WEB_APP): $(WEB_MAIN_OBJ) $(INTERFACE_OBJS) $(CORE_OBJS) $(SYSCALLS_LIB)
+	$(CC) -o $@ $(WEB_MAIN_OBJ) $(INTERFACE_OBJS) $(CORE_OBJS) -L$(SRC_DIR)/interfaces -lsyscalls $(RPATH) $(LIBS) $(WEB_LIBS)
 endif
 
+# Clean target
 clean:
-	rm -f $(OBJ_DIR)/*.o $(LIBNAME) $(BIN_DIR)/* testfile.txt
+	rm -rf $(OBJ_DIR)/* $(BIN_DIR)/* $(SRC_DIR)/interfaces/libsyscalls.so testfile.txt advanced_file_test.txt
 
-web: $(BIN_DIR)/web_server
+# Web interface target
+web: $(WEB_APP)
 
+# Help target
 help:
-	@echo "make: compile the library and the main application"
-	@echo "make web: compile the web interface (requires libmicrohttpd)"
-	@echo "make clean: remove object files and generated files"
-	@echo "make help: display this message"
-	@echo "DEBUG=y make: compile with debugging support"
+	@echo "Available targets:"
+	@echo "  make         - Build main application and library"
+	@echo "  make web     - Build web interface (requires libmicrohttpd)"
+	@echo "  make clean   - Remove all build artifacts"
+	@echo "  make help    - Show this help message"
+	@echo "  DEBUG=y make - Build with debug symbols"
 
 .PHONY: all clean help web

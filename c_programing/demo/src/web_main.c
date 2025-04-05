@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
-#include "../src/web_server.h"
+#include "../include/web_server.h"
 
 static struct MHD_Daemon *web_daemon = NULL;
 

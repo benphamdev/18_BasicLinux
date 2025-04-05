@@ -2,7 +2,7 @@
 #define WEB_SERVER_H
 
 #include <microhttpd.h>
-#include "../lib/syscalls.h"
+#include "syscalls.h"
 #include "demos.h"
 
 // Web server configuration
