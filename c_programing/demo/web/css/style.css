@@ -1,66 +1,112 @@
-/* Overall page styling */
+/* =================================
+   Overall Page Styling
+   ================================= */
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
   margin: 0;
   padding: 0;
   color: #333;
-  background-color: #f7f9fc;
+  /* Slightly softer gradient */
+  background: linear-gradient(135deg, #eef1f5 0%, #d8e0e8 100%);
+  min-height: 100vh;
+  display: flex; /* Use flexbox for footer */
+  flex-direction: column; /* Stack elements vertically */
 }
 
-/* Header styling */
+/* =================================
+   Header Styling
+   ================================= */
 header {
-  background-color: #2c3e50;
+  /* Refined gradient */
+  background: linear-gradient(to right, #3a506b, #5c85ad);
   color: white;
   padding: 1.5rem 2rem;
   text-align: center;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  /* Softer shadow */
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
 }
 
 header h1 {
   margin: 0;
   font-size: 2.5rem;
+  font-weight: 600; /* Slightly bolder */
 }
 
 header p {
   margin-top: 0.5rem;
   font-size: 1.2rem;
-  opacity: 0.8;
+  opacity: 0.9; /* Slightly more opaque */
 }
 
 .logo img {
-  height: 60px;
-  margin-bottom: 1rem;
+  height: 50px; /* Adjusted size */
+  margin-bottom: 0.5rem; /* Reduced margin */
 }
 
-/* Main content */
+.instructions {
+  margin-top: 1rem;
+  font-size: 1rem;
+  opacity: 0.85;
+  font-style: italic;
+}
+
+/* =================================
+   Main Content Area
+   ================================= */
 main {
+  flex: 1; /* Allow main to grow and push footer down */
   max-width: 1200px;
+  width: 100%; /* Ensure it takes available width */
   margin: 2rem auto;
   padding: 0 1.5rem;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
+  box-sizing: border-box; /* Include padding in width calculation */
+  overflow-x: auto; /* Allow horizontal scrolling if needed on small screens */
 }
 
-/* Demo list styling */
+.content-wrapper {
+  display: flex;
+  /* Removed flex-wrap: wrap; to keep items in a row */
+  gap: 2rem; /* Use gap for spacing */
+  justify-content: space-between;
+  min-width: 700px; /* Ensure minimum width to prevent excessive squishing */
+}
+
+/* =================================
+   Demo List Styling
+   ================================= */
 .demo-list {
-  flex: 1;
-  min-width: 300px;
-  max-width: 400px;
-  margin-right: 2rem;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  flex: 1; /* Takes up proportional space */
+  min-width: 300px; /* Maintain a minimum width */
+  /* Removed max-width: 400px; to allow flexibility */
+  background: #ffffff; /* Solid white background */
+  border-radius: 10px; /* Slightly smaller radius */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); /* Softer shadow */
   padding: 1.5rem;
-  max-height: 700px;
+  max-height: 70vh; /* Relative height */
   overflow-y: auto;
+  border: 1px solid #e0e0e0; /* Lighter border */
+}
+
+.demo-list h2 {
+  margin-top: 0;
+  color: #3a506b; /* Match header color */
+  border-bottom: 2px solid #eef1f5; /* Subtle border */
+  padding-bottom: 0.75rem;
+  font-size: 1.4rem;
 }
 
 .demo-item {
-  border-bottom: 1px solid #eee;
-  padding: 1rem 0;
+  border-bottom: 1px solid #f0f0f0; /* Lighter separator */
+  padding: 1rem 0.5rem; /* Adjusted padding */
   margin-bottom: 0.5rem;
+  transition: background-color 0.2s ease, transform 0.2s ease; /* Smoother transition */
+  border-radius: 4px; /* Slight rounding */
+}
+
+.demo-item:hover {
+  background-color: #f8f9fa; /* Lighter hover */
+  transform: translateX(3px); /* Subtle horizontal shift */
 }
 
 .demo-item:last-child {
@@ -69,115 +115,171 @@ main {
 
 .demo-item h3 {
   margin: 0 0 0.75rem 0;
-  color: #2c3e50;
+  color: #3a506b;
+  font-weight: 600;
+  font-size: 1.1rem; /* Slightly smaller heading */
 }
 
-/* Output container */
+/* =================================
+   Output Container Styling
+   ================================= */
 .output-container {
-  flex: 2;
-  min-width: 400px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  flex: 2; /* Takes up more space */
+  min-width: 400px; /* Maintain a minimum width */
+  background: #ffffff; /* Solid white */
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   padding: 1.5rem;
   position: relative;
+  border: 1px solid #e0e0e0;
+  display: flex; /* Use flexbox */
+  flex-direction: column; /* Stack children vertically */
+  max-height: 70vh; /* Match demo list height */
 }
 
 .output-container h2 {
   margin-top: 0;
-  color: #2c3e50;
-  font-size: 1.5rem;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 0.5rem;
+  color: #3a506b;
+  font-size: 1.4rem; /* Match demo list h2 */
+  border-bottom: 2px solid #eef1f5;
+  padding-bottom: 0.75rem;
+  flex-shrink: 0; /* Prevent h2 from shrinking */
 }
 
-/* Output style */
+/* =================================
+   Output Preformatted Text Styling
+   ================================= */
 #output {
-  background-color: #2c3e50;
-  color: #ecf0f1;
-  padding: 1.5rem;
-  border-radius: 4px;
-  font-family: "Courier New", Courier, monospace;
+  /* Darker, less saturated background */
+  background: #282c34; /* Common dark theme color */
+  color: #abb2bf; /* Common light text color for dark themes */
+  padding: 1rem; /* Slightly reduced padding */
+  border-radius: 6px; /* Smaller radius */
+  font-family: "Fira Code", "Consolas", "Courier New", Courier, monospace; /* Modern mono font */
   white-space: pre-wrap;
   overflow-x: auto;
-  min-height: 400px;
-  max-height: 600px;
-  overflow-y: auto;
-  font-size: 14px;
-  line-height: 1.4;
+  flex-grow: 1; /* Allow output to fill available space */
+  overflow-y: auto; /* Keep vertical scroll */
+  font-size: 0.9rem; /* Slightly smaller font */
+  line-height: 1.5; /* Improved line spacing */
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.2);
+  margin-top: 1rem; /* Space between title and output */
 }
 
-/* Highlight specific output elements */
+/* Highlight classes (optional, keep if used) */
 .output-important {
-  color: #e74c3c;
+  color: #e06c75; /* Softer red */
   font-weight: bold;
 }
-
 .output-success {
-  color: #2ecc71;
+  color: #98c379; /* Softer green */
 }
-
 .output-warning {
-  color: #f39c12;
+  color: #e5c07b; /* Softer yellow */
 }
 
-/* Buttons */
+/* =================================
+   Button Styling
+   ================================= */
 .run-button {
-  background-color: #2980b9;
+  /* Refined gradient */
+  background: linear-gradient(to right, #5c85ad, #6fa4d1);
   color: white;
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
+  padding: 0.5rem 1rem; /* Slightly smaller padding */
+  border-radius: 20px; /* Rounded corners */
   cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s;
+  font-weight: 600; /* Bolder text */
+  font-size: 0.9rem; /* Match output font size */
+  transition: all 0.2s ease; /* Faster transition */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: inline-block; /* Ensure proper layout */
 }
 
 .run-button:hover {
-  background-color: #3498db;
+  background: linear-gradient(to right, #6fa4d1, #5c85ad); /* Invert gradient */
+  transform: translateY(-1px); /* Subtle lift */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .run-button:active {
-  background-color: #1c638e;
+  transform: translateY(0px); /* Remove lift on click */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Footer */
+/* =================================
+   Footer Styling
+   ================================= */
 footer {
   text-align: center;
-  padding: 1.5rem;
-  background-color: #2c3e50;
+  padding: 1rem; /* Reduced padding */
+  /* Match header gradient */
+  background: linear-gradient(to right, #3a506b, #5c85ad);
   color: white;
-  opacity: 0.8;
+  opacity: 0.95; /* Slightly more opaque */
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem; /* Ensure space above footer */
+  flex-shrink: 0; /* Prevent footer from shrinking */
 }
 
-/* Loading indicator */
+footer p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* =================================
+   Loading Indicator Styling
+   ================================= */
+.output-container.loading {
+  position: relative; /* Needed for pseudo-element positioning */
+}
+
 .loading::after {
-  content: "Running...";
+  content: ""; /* Use a spinner instead of text */
+  position: absolute;
+  top: 50%; /* Center vertically */
+  left: 50%; /* Center horizontally */
+  width: 40px; /* Spinner size */
+  height: 40px; /* Spinner size */
+  margin-top: -20px; /* Offset by half height */
+  margin-left: -20px; /* Offset by half width */
+  border: 4px solid rgba(255, 255, 255, 0.3); /* Light border */
+  border-radius: 50%;
+  border-top-color: #ffffff; /* White spinner color */
+  animation: spin 1s linear infinite; /* Spin animation */
+  z-index: 10;
+}
+
+/* Add overlay for better visibility */
+.loading::before {
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: bold;
-  border-radius: 8px;
-  font-size: 24px;
-  z-index: 10;
+  background-color: rgba(40, 44, 52, 0.7); /* Semi-transparent overlay matching #output bg */
+  border-radius: 10px; /* Match container radius */
+  z-index: 9; /* Below the spinner */
 }
 
-/* Responsive design */
-@media (max-width: 900px) {
-  main {
-    flex-direction: column;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
+}
 
-  .demo-list {
-    margin-right: 0;
-    margin-bottom: 2rem;
-    max-width: 100%;
+/* Remove old pulse animation */
+/* @keyframes pulse { ... } */
+
+/* =================================
+   Responsive Design
+   ================================= */
+@media (max-width: 900px) {
+  /* Removed flex-direction: column; to keep side-by-side */
+  .demo-list,
+  .output-container {
+    margin-right: 0; /* Remove margin */
+    max-height: 75vh; /* Adjust max height for smaller screens */
   }
 }
