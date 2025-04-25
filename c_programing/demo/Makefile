@@ -52,6 +52,38 @@ else
 	$(warning "pkg-config not found. Cannot check for libmicrohttpd.")
 endif
 
+# Check for libcurl for AI integration
+CURL_CHECK := n
+ifeq ($(PKG_CONFIG_EXISTS), y)
+	CURL_CHECK := $(shell pkg-config --exists libcurl && echo "y" || echo "n")
+	ifeq ($(CURL_CHECK), y)
+		CFLAGS += $(shell pkg-config --cflags libcurl)
+		LIBS += $(shell pkg-config --libs libcurl)
+	else
+		$(warning "libcurl not found. AI integration will be disabled.")
+		CFLAGS += -DNO_AI_SUPPORT
+	endif
+else
+	$(warning "pkg-config not found. Cannot check for libcurl. AI integration will be disabled.")
+	CFLAGS += -DNO_AI_SUPPORT
+endif
+
+# Check for json-c for AI integration
+JSON_CHECK := n
+ifeq ($(PKG_CONFIG_EXISTS), y)
+	JSON_CHECK := $(shell pkg-config --exists json-c && echo "y" || echo "n")
+	ifeq ($(JSON_CHECK), y)
+		CFLAGS += $(shell pkg-config --cflags json-c)
+		LIBS += $(shell pkg-config --libs json-c)
+	else
+		$(warning "json-c not found. AI integration will be disabled.")
+		CFLAGS += -DNO_AI_SUPPORT
+	endif
+else
+	$(warning "pkg-config not found. Cannot check for json-c. AI integration will be disabled.")
+	CFLAGS += -DNO_AI_SUPPORT
+endif
+
 # Source files
 CORE_SRCS=$(wildcard $(SRC_DIR)/core/*.c)
 INFRA_SRCS=$(wildcard $(SRC_DIR)/infrastructure/*.c)
@@ -103,9 +135,16 @@ $(OBJ_DIR)/infrastructure/%.o: $(SRC_DIR)/infrastructure/%.c
 $(OBJ_DIR)/interfaces/%.o: $(SRC_DIR)/interfaces/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Interface objects excluding web_server if MHD is not available
+ifeq ($(MHD_CHECK), y)
+FILTERED_INTERFACE_OBJS = $(INTERFACE_OBJS)
+else
+FILTERED_INTERFACE_OBJS = $(filter-out $(OBJ_DIR)/interfaces/web_server.o, $(INTERFACE_OBJS))
+endif
+
 # Create the main executable
-$(MAIN_APP): $(MAIN_OBJ) $(CORE_OBJS) $(SYSCALLS_LIB)
-	$(CC) -o $@ $(MAIN_OBJ) $(CORE_OBJS) -L$(SRC_DIR)/interfaces -lsyscalls $(RPATH) $(LIBS)
+$(MAIN_APP): $(MAIN_OBJ) $(CORE_OBJS) $(FILTERED_INTERFACE_OBJS) $(SYSCALLS_LIB)
+	$(CC) -o $@ $(MAIN_OBJ) $(CORE_OBJS) $(FILTERED_INTERFACE_OBJS) -L$(SRC_DIR)/interfaces -lsyscalls $(RPATH) $(LIBS) $(if $(MHD_CHECK),$(WEB_LIBS),)
 
 # Build the web interface if libmicrohttpd is available
 ifeq ($(MHD_CHECK), y)

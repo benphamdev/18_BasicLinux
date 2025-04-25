@@ -1,5 +1,6 @@
 #include "../include/syscalls.h"
 #include "../include/demos.h"
+#include "../include/ai_integration.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -44,6 +45,7 @@ void diplay_menu() {
     print_message("23. Process Priority and Resource Usage Demo\n");
     print_message("24. User and Group IDs Demo\n");
     print_message("25. File Locking Demo\n");
+    print_message("26. DeepSeek AI Integration Demo\n");
     print_message("0. Exit Program\n");
     print_message("----------------------\n");
     print_message("Enter your choice: ");
@@ -151,8 +153,13 @@ int main() {
             case 25:
                 demo_file_locking();
                 break;
+            case 26:
+                demo_ai_operations();
+                break;
             case 0:
                 print_message("\nExiting System Call Library Demo. Goodbye!\n");
+                // Cleanup AI resources if initialized
+                ai_cleanup();
                 return 0;
             default:
                 print_message("\nInvalid choice. Please try again.\n");

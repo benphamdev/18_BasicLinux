@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DeepSeek AI Chat</title>
+    <link rel="stylesheet" href="../css/style.css" />
+    <style>
+      #chat-container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #f7f7f7;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      #chat-messages {
+        height: 400px;
+        overflow-y: auto;
+        margin-bottom: 15px;
+        padding: 15px;
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      #chat-form {
+        display: flex;
+        gap: 10px;
+      }
+      #user-input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .message {
+        margin-bottom: 12px;
+        padding: 10px;
+        border-radius: 5px;
+      }
+      .user-message {
+        background-color: #e3f2fd;
+        margin-left: 20px;
+        margin-right: 5px;
+        text-align: right;
+      }
+      .ai-message {
+        background-color: #f1f1f1;
+        margin-right: 20px;
+        margin-left: 5px;
+      }
+      .message-header {
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .loading {
+        margin: 10px 0;
+        font-style: italic;
+        color: #666;
+      }
+      .project-context-btn {
+        margin-top: 10px;
+      }
+      pre {
+        background-color: #f8f8f8;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+      }
+      code {
+        font-family: Consolas, Monaco, "Andale Mono", monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chat-container">
+      <h1>DeepSeek AI Chat</h1>
+      <p>Chat with DeepSeek AI about your project</p>
+
+      <div id="chat-messages"></div>
+
+      <div id="loading" class="loading" style="display: none">DeepSeek is thinking...</div>
+
+      <form id="chat-form">
+        <input type="text" id="user-input" placeholder="Type your message here..." autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+
+      <button id="project-context-btn" class="project-context-btn">Get Project Context</button>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const chatForm = document.getElementById("chat-form");
+        const userInput = document.getElementById("user-input");
+        const chatMessages = document.getElementById("chat-messages");
+        const loadingIndicator = document.getElementById("loading");
+        const projectContextBtn = document.getElementById("project-context-btn");
+
+        // Welcome message
+        addMessage("DeepSeek AI", "Hello! I'm DeepSeek AI. How can I help with your project today?", "ai");
+
+        chatForm.addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          const userMessage = userInput.value.trim();
+          if (!userMessage) return;
+
+          // Add user message to chat
+          addMessage("You", userMessage, "user");
+          userInput.value = "";
+
+          // Show loading indicator
+          loadingIndicator.style.display = "block";
+
+          try {
+            // Send to server endpoint
+            const response = await fetch("/api/chat", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ message: userMessage }),
+            });
+
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+
+            const data = await response.json();
+
+            // Add AI response to chat
+            addMessage("DeepSeek AI", data.response, "ai");
+          } catch (error) {
+            console.error("Error:", error);
+            addMessage("System", "Sorry, there was an error communicating with DeepSeek AI.", "ai");
+          } finally {
+            // Hide loading indicator
+            loadingIndicator.style.display = "none";
+          }
+        });
+
+        projectContextBtn.addEventListener("click", async function () {
+          // Show loading indicator
+          loadingIndicator.style.display = "block";
+          addMessage("System", "Gathering project context...", "ai");
+
+          try {
+            const response = await fetch("/api/project-context");
+
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+              addMessage(
+                "System",
+                "Project context gathered. DeepSeek now has information about your project structure and key files.",
+                "ai"
+              );
+            } else {
+              addMessage("System", "Failed to gather project context: " + data.error, "ai");
+            }
+          } catch (error) {
+            console.error("Error:", error);
+            addMessage("System", "Failed to gather project context due to a network error.", "ai");
+          } finally {
+            // Hide loading indicator
+            loadingIndicator.style.display = "none";
+          }
+        });
+
+        function addMessage(sender, message, type) {
+          const messageDiv = document.createElement("div");
+          messageDiv.className = `message ${type}-message`;
+
+          // Format code blocks if present
+          message = formatCodeBlocks(message);
+
+          messageDiv.innerHTML = `
+                    <div class="message-header">${sender}:</div>
+                    <div class="message-content">${message}</div>
+                `;
+
+          chatMessages.appendChild(messageDiv);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function formatCodeBlocks(text) {
+          // Simple code block formatting
+          // Replace ```language ... ``` with proper HTML
+          return text.replace(/```(?:(\w+)\n)?([\s\S]*?)```/g, function (match, language, code) {
+            return `<pre><code>${escapeHtml(code)}</code></pre>`;
+          });
+        }
+
+        function escapeHtml(unsafe) {
+          return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+        }
+      });
+    </script>
+  </body>
+</html>

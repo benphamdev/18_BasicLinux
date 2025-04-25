@@ -6,6 +6,24 @@
     <title>System Call Library Demo</title>
     <!-- Use root-relative path for consistency -->
     <link rel="stylesheet" href="../css/style.css" />
+    <style>
+      .ai-chat-button {
+        display: block;
+        margin: 20px auto;
+        padding: 12px 24px;
+        background-color: #4285f4;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .ai-chat-button:hover {
+        background-color: #3367d6;
+      }
+    </style>
   </head>
   <body>
     <header>
@@ -20,6 +38,8 @@
     </header>
 
     <main>
+      <a href="/deepseek-chat" class="ai-chat-button">Chat with DeepSeek AI about this project</a>
+
       <div class="content-wrapper">
         <div class="demo-list">
           <h2>Available Demos</h2>

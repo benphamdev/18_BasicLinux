@@ -2,6 +2,7 @@
   "files.associations": {
     "*.cpp": "cpp",
     "*.js": "javascriptreact",
-    "syscalls.h": "c"
+    "syscalls.h": "c",
+    "ai_integration.h": "c"
   }
 }

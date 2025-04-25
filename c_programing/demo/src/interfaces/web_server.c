@@ -1,4 +1,5 @@
 #include "../../include/web_server.h"
+#include "../../include/ai_integration.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,10 +7,34 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#include <dirent.h>
+
+// Structure to store POST request data
+struct PostConnectionData {
+    char *data;
+    size_t size;
+    int is_first_call;
+};
+
+// Forward declarations to fix implicit declaration errors
+char* extract_json_value(const char* json, const char* key);
+char* create_json_response(const char* message);
+char* process_ai_request(const char* message);
+char* generate_project_context(void);
+void scan_directory(const char *path, char *buffer, size_t *pos, size_t *buffer_size, int depth, int max_depth);
+void add_file_content(const char *file_path, char *buffer, size_t *pos, size_t *buffer_size, int max_lines);
+char* load_template(const char* filename);
+char* generate_demo_html(void);
+char* capture_demo_output(void (*demo_func)(void));
+const char* get_content_type(const char* filename);
 
 // Buffer for capturing demo output
 static char output_buffer[65536];
 static pthread_mutex_t output_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// Global project context for DeepSeek AI
+static char *project_context = NULL;
+static pthread_mutex_t context_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // Demo function declarations - from your existing code
 extern void demo_file_operations();
@@ -68,6 +93,16 @@ static const demo_info_t demos[] = {
 
 // Initialize the web server
 struct MHD_Daemon* init_web_server(void) {
+    // Initialize the AI system first
+    // Using the from_env_file version which doesn't need an explicit API key
+    // It will read from .env file or environment variables
+    if (!ai_init_from_env_file(NULL)) {
+        fprintf(stderr, "Failed to initialize AI system\n");
+        // Continue anyway, other functionality will still work
+    } else {
+        printf("AI system initialized successfully\n");
+    }
+
     struct MHD_Daemon* daemon = MHD_start_daemon(
         MHD_USE_SELECT_INTERNALLY | MHD_USE_DEBUG,
         SERVER_PORT,
@@ -97,22 +132,185 @@ int handle_request(void* cls, struct MHD_Connection* connection,
                  const char* url, const char* method, const char* version,
                  const char* upload_data, size_t* upload_data_size, void** con_cls) {
     
-    static int request_marker;
     struct MHD_Response* response;
     int ret;
     
-    // Set up a request marker for the first call
+    // First call setup
     if (*con_cls == NULL) {
-        *con_cls = &request_marker;
+        // For POST requests, allocate a structure to store data
+        if (strcmp(method, "POST") == 0) {
+            struct PostConnectionData *post_data = malloc(sizeof(struct PostConnectionData));
+            if (post_data == NULL) {
+                return MHD_NO;
+            }
+            post_data->data = NULL;
+            post_data->size = 0;
+            post_data->is_first_call = 1;
+            *con_cls = post_data;
+        } else {
+            // For non-POST requests, just use a dummy marker
+            static int dummy;
+            *con_cls = &dummy;
+        }
         return MHD_YES;
     }
+
+    printf("Received request: %s %s\n", method, url);
     
-    if (strcmp(method, "GET") != 0) {
-        // Only handle GET requests
-        return MHD_NO;
+    // Handle POST request for chat API
+    if (strcmp(url, "/api/chat") == 0 && strcmp(method, "POST") == 0) {
+        struct PostConnectionData *post_data = *con_cls;
+        
+        // Process incoming data chunks
+        if (*upload_data_size != 0) {
+            // Append the new chunk to our buffer
+            char *new_data = realloc(post_data->data, post_data->size + *upload_data_size + 1);
+            if (new_data == NULL) {
+                // Memory allocation error
+                if (post_data->data) {
+                    free(post_data->data);
+                }
+                free(post_data);
+                *con_cls = NULL;
+                return MHD_NO;
+            }
+            
+            post_data->data = new_data;
+            memcpy(post_data->data + post_data->size, upload_data, *upload_data_size);
+            post_data->size += *upload_data_size;
+            post_data->data[post_data->size] = '\0';
+            
+            // Mark that we've consumed this chunk
+            *upload_data_size = 0;
+            
+            // Wait for more data
+            return MHD_YES;
+        }
+        
+        // No more data - process the complete POST request
+        if (post_data->data != NULL) {
+            const char *content_type = MHD_lookup_connection_value(connection, MHD_HEADER_KIND, "Content-Type");
+            
+            printf("Received POST data: %s\n", post_data->data);
+            
+            if (content_type != NULL && strstr(content_type, "application/json") != NULL) {
+                // Process the JSON data
+                char *message = extract_json_value(post_data->data, "message");
+                
+                if (message != NULL) {
+                    printf("Extracted message: %s\n", message);
+                    
+                    // Call DeepSeek API
+                    char *ai_response = process_ai_request(message);
+                    free(message);
+                    
+                    // Create JSON response
+                    char *json_response = create_json_response(ai_response ? ai_response : "Error processing request");
+                    if (ai_response) {
+                        free(ai_response);
+                    }
+                    
+                    // Send response
+                    response = MHD_create_response_from_buffer(
+                        strlen(json_response),
+                        json_response,
+                        MHD_RESPMEM_MUST_FREE
+                    );
+                    MHD_add_response_header(response, "Content-Type", "application/json");
+                    MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+                    ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+                    MHD_destroy_response(response);
+                    
+                    // Clean up
+                    if (post_data->data) free(post_data->data);
+                    free(post_data);
+                    *con_cls = NULL;
+                    
+                    return ret;
+                }
+            }
+            
+            // If we get here, something went wrong with processing the data
+            const char *error_json = "{\"error\":\"Could not parse request data\"}";
+            response = MHD_create_response_from_buffer(
+                strlen(error_json),
+                (void*)error_json,
+                MHD_RESPMEM_PERSISTENT
+            );
+            MHD_add_response_header(response, "Content-Type", "application/json");
+            MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+            ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
+            MHD_destroy_response(response);
+            
+            // Clean up
+            if (post_data->data) free(post_data->data);
+            free(post_data);
+            *con_cls = NULL;
+            
+            return ret;
+        }
     }
     
-    printf("Received request for URL: %s\n", url);
+    // Handle OPTIONS request for CORS preflight
+    if (strcmp(method, "OPTIONS") == 0) {
+        response = MHD_create_response_from_buffer(0, "", MHD_RESPMEM_PERSISTENT);
+        MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+        MHD_add_response_header(response, "Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
+        MHD_add_response_header(response, "Access-Control-Max-Age", "86400");
+        ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+        MHD_destroy_response(response);
+        return ret;
+    }
+    
+    // Handle GET request for project context
+    if (strcmp(url, "/api/project-context") == 0 && strcmp(method, "GET") == 0) {
+        char *json_response;
+        
+        // Generate project context if we don't have it yet
+        pthread_mutex_lock(&context_mutex);
+        if (project_context == NULL) {
+            project_context = generate_project_context();
+        }
+        
+        if (project_context != NULL) {
+            size_t response_len = strlen(project_context) + 50;
+            json_response = malloc(response_len);
+            if (json_response != NULL) {
+                snprintf(json_response, response_len, "{\"success\":true,\"contextSize\":%zu}", strlen(project_context));
+            } else {
+                json_response = strdup("{\"success\":false,\"error\":\"Memory allocation failed\"}");
+            }
+        } else {
+            json_response = strdup("{\"success\":false,\"error\":\"Failed to generate project context\"}");
+        }
+        pthread_mutex_unlock(&context_mutex);
+        
+        response = MHD_create_response_from_buffer(
+            strlen(json_response),
+            json_response,
+            MHD_RESPMEM_MUST_FREE
+        );
+        MHD_add_response_header(response, "Content-Type", "application/json");
+        ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+        MHD_destroy_response(response);
+        return ret;
+    }
+    
+    // Handle DeepSeek chat page
+    if (strcmp(url, "/deepseek-chat") == 0 || strcmp(url, "/deepseek-chat/") == 0) {
+        char *chat_html = load_template("deepseek_chat.html");
+        
+        response = MHD_create_response_from_buffer(
+            strlen(chat_html),
+            chat_html,
+            MHD_RESPMEM_MUST_FREE
+        );
+        MHD_add_response_header(response, "Content-Type", "text/html");
+        ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+        MHD_destroy_response(response);
+        return ret;
+    }
     
     // Handle static files (CSS, JS, images)
     if (strstr(url, ".css") || strstr(url, ".js") || 
@@ -213,17 +411,312 @@ int handle_request(void* cls, struct MHD_Connection* connection,
     }
     
     // Main page - generate HTML
-    printf("Generating main page HTML\n");
-    char* page_content = generate_demo_html();
+    if (strcmp(url, "/") == 0 || strcmp(url, "/index.html") == 0) {
+        printf("Generating main page HTML\n");
+        char* page_content = generate_demo_html();
+        
+        response = MHD_create_response_from_buffer(strlen(page_content),
+                                                (void*)page_content,
+                                                MHD_RESPMEM_MUST_FREE);
+        MHD_add_response_header(response, "Content-Type", "text/html");
+        ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+        MHD_destroy_response(response);
+        
+        return ret;
+    }
     
-    response = MHD_create_response_from_buffer(strlen(page_content),
-                                              (void*)page_content,
-                                              MHD_RESPMEM_MUST_FREE);
-    MHD_add_response_header(response, "Content-Type", "text/html");
-    ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+    // Not found
+    const char* not_found = "<html><body><h1>404 Not Found</h1></body></html>";
+    response = MHD_create_response_from_buffer(strlen(not_found),
+                                            (void*)not_found,
+                                            MHD_RESPMEM_PERSISTENT);
+    ret = MHD_queue_response(connection, MHD_HTTP_NOT_FOUND, response);
     MHD_destroy_response(response);
-    
     return ret;
+}
+
+// Extract JSON value from a key
+char* extract_json_value(const char* json, const char* key) {
+    // Simple JSON parser (for production, use a proper JSON library)
+    char search_key[256];
+    snprintf(search_key, sizeof(search_key), "\"%s\":\"", key);
+    
+    char* start = strstr(json, search_key);
+    if (start == NULL) {
+        return NULL;
+    }
+    
+    start += strlen(search_key);
+    char* end = strchr(start, '"');
+    if (end == NULL) {
+        return NULL;
+    }
+    
+    size_t len = end - start;
+    char* value = malloc(len + 1);
+    if (value == NULL) {
+        return NULL;
+    }
+    
+    strncpy(value, start, len);
+    value[len] = '\0';
+    return value;
+}
+
+// Create a JSON response
+char* create_json_response(const char* message) {
+    // Escape special characters in message
+    size_t message_len = strlen(message);
+    size_t json_size = message_len * 2 + 100; // Allow extra space for escaping and JSON format
+    
+    char* json = malloc(json_size);
+    if (json == NULL) {
+        return NULL;
+    }
+    
+    // Start with JSON opening
+    strcpy(json, "{\"response\":\"");
+    
+    // Copy and escape message
+    size_t pos = strlen(json);
+    for (size_t i = 0; i < message_len; i++) {
+        char c = message[i];
+        if (c == '"' || c == '\\' || c == '\n' || c == '\r') {
+            json[pos++] = '\\';
+            if (c == '\n') {
+                json[pos++] = 'n';
+            } else if (c == '\r') {
+                json[pos++] = 'r';
+            } else {
+                json[pos++] = c;
+            }
+        } else {
+            json[pos++] = c;
+        }
+        
+        // Check if we're about to overflow
+        if (pos >= json_size - 10) {
+            json_size *= 2;
+            char* new_json = realloc(json, json_size);
+            if (new_json == NULL) {
+                free(json);
+                return NULL;
+            }
+            json = new_json;
+        }
+    }
+    
+    // Add JSON closing
+    strcpy(json + pos, "\"}");
+    
+    return json;
+}
+
+// Process an AI request using DeepSeek
+char* process_ai_request(const char* message) {
+    // Check if we have project context
+    pthread_mutex_lock(&context_mutex);
+    char *prompt;
+    
+    if (project_context != NULL) {
+        // Combine project context with user message
+        size_t prompt_size = strlen(message) + strlen(project_context) + 200;
+        prompt = malloc(prompt_size);
+        if (prompt != NULL) {
+            snprintf(prompt, prompt_size, 
+                "You are an AI assistant helping with a C programming project. "
+                "Here's the context about the project structure:\n\n%s\n\n"
+                "User question: %s", 
+                project_context, message);
+        } else {
+            prompt = strdup(message);
+        }
+    } else {
+        prompt = strdup(message);
+    }
+    pthread_mutex_unlock(&context_mutex);
+    
+    if (prompt == NULL) {
+        return strdup("Error creating prompt");
+    }
+    
+    // Call DeepSeek API
+    char *response = ai_generate_text(prompt, NULL);
+    
+    // Check if the AI failed and try to reinitialize
+    if (response == NULL || strstr(response, "AI not initialized") != NULL) {
+        // Attempt to reinitialize the AI
+        printf("AI appears to be uninitialized. Attempting to reinitialize...\n");
+        
+        // Free existing error response if any
+        if (response) {
+            free(response);
+            response = NULL;
+        }
+        
+        // Try to initialize the AI
+        if (ai_init_from_env_file(NULL)) {
+            printf("AI successfully reinitialized. Retrying request...\n");
+            // Retry the request
+            response = ai_generate_text(prompt, NULL);
+        } else {
+            printf("AI reinitialization failed\n");
+            response = strdup("The AI system could not be initialized. Please check your API key configuration.");
+        }
+    }
+    
+    free(prompt);
+    
+    // If still null, provide a fallback response
+    if (response == NULL) {
+        return strdup("Error processing request. The AI service might be unavailable.");
+    }
+    
+    return response;
+}
+
+// Scan project directory and generate context
+char* generate_project_context() {
+    // Buffer to store project structure
+    size_t buffer_size = 65536;  // Start with 64KB
+    char *buffer = malloc(buffer_size);
+    if (buffer == NULL) {
+        return NULL;
+    }
+    
+    size_t pos = 0;
+    pos += snprintf(buffer + pos, buffer_size - pos, 
+        "Project Structure Overview:\n\n");
+    
+    // Start scanning from the project root
+    scan_directory(".", buffer, &pos, &buffer_size, 0, 5);  // Max depth of 5
+    
+    // Add some key file contents
+    pos += snprintf(buffer + pos, buffer_size - pos, 
+        "\n\nKey Files Summary:\n\n");
+    
+    // Add main.c
+    add_file_content("src/main.c", buffer, &pos, &buffer_size, 100);  // First 100 lines
+    
+    // Add syscalls.h
+    add_file_content("include/syscalls.h", buffer, &pos, &buffer_size, 50);  // First 50 lines
+    
+    // Add ai_integration.h
+    add_file_content("include/ai_integration.h", buffer, &pos, &buffer_size, 100);  // All lines
+    
+    // Ensure buffer is null-terminated
+    if (pos < buffer_size) {
+        buffer[pos] = '\0';
+    } else {
+        buffer[buffer_size - 1] = '\0';
+    }
+    
+    return buffer;
+}
+
+// Recursively scan directory and add to context
+void scan_directory(const char *path, char *buffer, size_t *pos, size_t *buffer_size, int depth, int max_depth) {
+    if (depth > max_depth) {
+        return;
+    }
+    
+    DIR *dir = opendir(path);
+    if (dir == NULL) {
+        return;
+    }
+    
+    // Add indentation based on depth
+    char indent[32] = {0};
+    for (int i = 0; i < depth; i++) {
+        strcat(indent, "  ");
+    }
+    
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        // Skip hidden files and special directories
+        if (entry->d_name[0] == '.') {
+            continue;
+        }
+        
+        // Check if we need to resize buffer
+        if (*pos + 256 > *buffer_size) {
+            *buffer_size *= 2;
+            char *new_buffer = realloc(buffer, *buffer_size);
+            if (new_buffer == NULL) {
+                closedir(dir);
+                return;
+            }
+            buffer = new_buffer;
+        }
+        
+        char full_path[1024];
+        snprintf(full_path, sizeof(full_path), "%s/%s", path, entry->d_name);
+        
+        struct stat st;
+        if (stat(full_path, &st) == 0) {
+            if (S_ISDIR(st.st_mode)) {
+                // Directory
+                *pos += snprintf(buffer + *pos, *buffer_size - *pos, 
+                    "%s- %s/\n", indent, entry->d_name);
+                
+                // Recursively scan subdirectory
+                scan_directory(full_path, buffer, pos, buffer_size, depth + 1, max_depth);
+            } else {
+                // File
+                *pos += snprintf(buffer + *pos, *buffer_size - *pos, 
+                    "%s- %s\n", indent, entry->d_name);
+            }
+        }
+    }
+    
+    closedir(dir);
+}
+
+// Add file content to context buffer
+void add_file_content(const char *file_path, char *buffer, size_t *pos, size_t *buffer_size, int max_lines) {
+    FILE *file = fopen(file_path, "r");
+    if (file == NULL) {
+        *pos += snprintf(buffer + *pos, *buffer_size - *pos, 
+            "Cannot open file: %s\n", file_path);
+        return;
+    }
+    
+    // Add file header
+    *pos += snprintf(buffer + *pos, *buffer_size - *pos, 
+        "File: %s\n```c\n", file_path);
+    
+    char line[1024];
+    int line_count = 0;
+    
+    while (fgets(line, sizeof(line), file) && line_count < max_lines) {
+        size_t line_len = strlen(line);
+        
+        // Check if we need to resize buffer
+        if (*pos + line_len + 10 > *buffer_size) {
+            *buffer_size *= 2;
+            char *new_buffer = realloc(buffer, *buffer_size);
+            if (new_buffer == NULL) {
+                fclose(file);
+                return;
+            }
+            buffer = new_buffer;
+        }
+        
+        // Add line to buffer
+        memcpy(buffer + *pos, line, line_len);
+        *pos += line_len;
+        line_count++;
+    }
+    
+    if (!feof(file)) {
+        *pos += snprintf(buffer + *pos, *buffer_size - *pos, 
+            "... (truncated, %d lines shown)\n", max_lines);
+    }
+    
+    // Add file footer
+    *pos += snprintf(buffer + *pos, *buffer_size - *pos, "```\n\n");
+    
+    fclose(file);
 }
 
 // Load a template file
