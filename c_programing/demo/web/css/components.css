@@ -1,0 +1,187 @@
+/* =================================
+   Demo List Styling
+   ================================= */
+.demo-list {
+  flex: 1;
+  min-width: 300px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  max-height: 70vh;
+  overflow-y: auto;
+  border: 1px solid #e8e8e8;
+  position: relative;
+}
+
+.demo-list::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.9), transparent);
+  pointer-events: none;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
+.demo-list h2 {
+  margin-top: 0;
+  color: #2a4365;
+  border-bottom: 2px solid #e4e8f0;
+  padding-bottom: 1rem;
+  font-size: 1.6rem;
+  letter-spacing: -0.02em;
+  position: relative;
+}
+
+.demo-list h2::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 50px;
+  height: 2px;
+  background: linear-gradient(to right, #4a6fa5, #5c85ad);
+}
+
+.demo-item {
+  border-bottom: 1px solid #f0f0f0;
+  padding: 1.2rem 0.8rem;
+  margin-bottom: 0.8rem;
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.demo-item:hover {
+  background-color: #f8f9fa;
+  transform: translateX(5px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.demo-item:hover::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, #4a6fa5, #5c85ad);
+  border-radius: 4px 0 0 4px;
+}
+
+.demo-item:last-child {
+  border-bottom: none;
+}
+
+.demo-item h3 {
+  margin: 0 0 0.8rem 0;
+  color: #2a4365;
+  font-weight: 600;
+  font-size: 1.2rem;
+}
+
+/* =================================
+   Button Styling
+   ================================= */
+.run-button {
+  /* More vibrant gradient */
+  background: linear-gradient(45deg, #4a6fa5, #6fa4d1);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 24px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(74, 111, 165, 0.3);
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+  overflow: hidden;
+}
+
+.run-button:hover {
+  background: linear-gradient(45deg, #6fa4d1, #4a6fa5);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(74, 111, 165, 0.4);
+}
+
+.run-button:active {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(74, 111, 165, 0.3);
+}
+
+/* Create subtle ripple effect */
+.run-button::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%, -50%);
+  transform-origin: 50% 50%;
+}
+
+.run-button:focus:not(:active)::after {
+  animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(20, 20);
+    opacity: 0;
+  }
+}
+
+/* =================================
+   Output Container Styling
+   ================================= */
+.output-container {
+  flex: 2;
+  min-width: 400px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  position: relative;
+  border: 1px solid #e8e8e8;
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+}
+
+.output-container h2 {
+  margin-top: 0;
+  color: #2a4365;
+  font-size: 1.6rem;
+  border-bottom: 2px solid #e4e8f0;
+  padding-bottom: 1rem;
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+  position: relative;
+}
+
+.output-container h2::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 50px;
+  height: 2px;
+  background: linear-gradient(to right, #4a6fa5, #5c85ad);
+}

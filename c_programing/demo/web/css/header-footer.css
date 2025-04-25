@@ -1,0 +1,95 @@
+/* =================================
+   Header Styling
+   ================================= */
+header {
+  /* Richer gradient with better contrast */
+  background: linear-gradient(120deg, #2a4365, #4a6fa5, #5c85ad);
+  color: white;
+  padding: 1.8rem 2rem;
+  text-align: center;
+  /* Enhanced shadow for depth */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Add subtle pattern overlay */
+header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 80%);
+  opacity: 0.6;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2.8rem;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative; /* For z-index */
+  z-index: 2; /* Place above the pattern */
+}
+
+header p {
+  margin-top: 0.6rem;
+  font-size: 1.3rem;
+  opacity: 0.92;
+  position: relative; /* For z-index */
+  z-index: 2; /* Place above the pattern */
+}
+
+.logo img {
+  height: 56px;
+  margin-bottom: 0.7rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.instructions {
+  margin-top: 1.2rem;
+  font-size: 1.1rem;
+  opacity: 0.85;
+  font-style: italic;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* =================================
+   Footer Styling
+   ================================= */
+footer {
+  text-align: center;
+  padding: 1.5rem;
+  /* Enhanced gradient */
+  background: linear-gradient(120deg, #2a4365, #4a6fa5, #5c85ad);
+  color: white;
+  opacity: 0.98;
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.08);
+  margin-top: 3rem;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Add subtle pattern overlay */
+footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 80%);
+  opacity: 0.6;
+}
+
+footer p {
+  margin: 0;
+  font-size: 0.95rem;
+  position: relative;
+  z-index: 2;
+}

@@ -1,0 +1,67 @@
+/* =================================
+   Overall Page Styling
+   ================================= */
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0;
+  color: #333;
+  /* Enhanced gradient with more subtle colors */
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* =================================
+   Main Content Area
+   ================================= */
+main {
+  flex: 1;
+  max-width: 1200px;
+  width: 100%;
+  margin: 3rem auto;
+  padding: 0 1.8rem;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+.content-wrapper {
+  display: flex;
+  gap: 3rem;
+  justify-content: space-between;
+  min-width: 700px;
+}
+
+/* Adding subtle scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #5c85ad, #4a6fa5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #4a6fa5, #2a4365);
+}
+
+/* =================================
+   Responsive Design
+   ================================= */
+@media (max-width: 900px) {
+  .demo-list,
+  .output-container {
+    margin-right: 0;
+    max-height: 80vh;
+  }
+}

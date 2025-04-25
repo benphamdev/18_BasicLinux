@@ -1,0 +1,77 @@
+/* =================================
+   Output Preformatted Text Styling
+   ================================= */
+#output {
+  /* Enhanced gradient for code output */
+  background: linear-gradient(to bottom right, #282c34, #1c1e24);
+  color: #abb2bf;
+  padding: 1.2rem;
+  border-radius: 8px;
+  font-family: "Fira Code", "Consolas", "Courier New", Courier, monospace;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  flex-grow: 1;
+  overflow-y: auto;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+  margin-top: 1.2rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Highlight classes with more vibrant colors */
+.output-important {
+  color: #e06c75;
+  font-weight: bold;
+}
+.output-success {
+  color: #98c379;
+}
+.output-warning {
+  color: #e5c07b;
+}
+
+/* =================================
+   Loading Indicator Styling
+   ================================= */
+.output-container.loading {
+  position: relative;
+}
+
+.loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50px;
+  height: 50px;
+  margin-top: -25px;
+  margin-left: -25px;
+  border: 4px solid rgba(111, 164, 209, 0.2);
+  border-radius: 50%;
+  border-top-color: #5c85ad;
+  animation: spin 1s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
+  z-index: 10;
+}
+
+/* Add enhanced overlay with gradient */
+.loading::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(40, 44, 52, 0.7), rgba(28, 30, 36, 0.8));
+  border-radius: 10px;
+  z-index: 9;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
