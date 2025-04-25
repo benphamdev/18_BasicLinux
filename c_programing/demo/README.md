@@ -15,6 +15,7 @@
   - [Building the Application](#building-the-application)
   - [Building the Web Interface](#building-the-web-interface)
 - [Running the Web Server](#running-the-web-server)
+- [DeepSeek AI Chat Interface](#deepseek-ai-chat-interface)
 - [Example Usage](#example-usage)
 - [Supported System Calls](#supported-system-calls)
 - [Library Functionalities](#library-functionalities)
@@ -39,6 +40,7 @@
   - [Process Control](#process-control)
   - [Capabilities](#capabilities)
 - [Error Handling](#error-handling)
+- [AI Integration](#ai-integration)
 
 ## 📋 Overview
 
@@ -52,7 +54,8 @@ demo/
 ├── include/           # Header files
 │   ├── demos.h
 │   ├── syscalls.h
-│   └── web_server.h
+│   ├── web_server.h
+│   └── ai_integration.h  # DeepSeek AI integration
 ├── src/               # Source files
 │   ├── main.c         # Main application entry point
 │   ├── web_main.c     # Web server entry point
@@ -61,17 +64,26 @@ demo/
 │   ├── infrastructure/
 │   │   └── syscalls.c # System call wrappers
 │   └── interfaces/
-│       └── web_server.c # Web interface
+│       ├── web_server.c   # Web interface
+│       └── ai_integration.c # DeepSeek AI integration
 ├── build/             # Build artifacts
 │   ├── bin/           # Executables
 │   └── obj/           # Object files
 ├── data/              # Data files
-│   └── test.txt
+│   ├── test.txt
+│   └── .env           # Environment file for DeepSeek API key
 ├── web/               # Web interface files
 │   ├── assets/
+│   │   └── logo.png
 │   ├── css/
+│   │   └── style.css
 │   ├── js/
+│   │   └── app.js
 │   └── templates/
+│       ├── index.html
+│       ├── header.html
+│       ├── footer.html
+│       └── deepseek_chat.html # DeepSeek AI chat interface
 ├── Makefile           # Build automation
 └── README.md          # Documentation
 ```
@@ -83,6 +95,9 @@ Before building the project, ensure you have the required dependencies:
 ```bash
 # Install libmicrohttpd for the web interface
 sudo apt-get install pkg-config libmicrohttpd-dev
+
+# Install libcurl and json-c for DeepSeek AI integration
+sudo apt-get install libcurl4-openssl-dev libjson-c-dev
 ```
 
 ## 🔧 Building Instructions
@@ -128,7 +143,35 @@ After building the project, you can run the web server with:
 ./build/bin/web_server
 ```
 
-The server will start and you can access the web interface by navigating to <http://localhost:8000> in your web browser.
+The server will start and you can access the web interface by navigating to <http://localhost:8080> in your web browser.
+
+## 🤖 DeepSeek AI Chat Interface
+
+The project includes an AI-powered chat interface that lets you interact with DeepSeek AI about your codebase. This feature allows you to ask questions about the project, request explanations of system calls, or get help with programming issues.
+
+### Setting up DeepSeek AI
+
+1. Create a `.env` file in your project root or `data/` directory with your DeepSeek API key:
+
+   ```
+   DEEPSEEK_API_KEY=your_api_key_here
+   ```
+
+2. The web server will automatically initialize the AI system on startup.
+
+### Using the AI Chat Interface
+
+1. Navigate to the main page at <http://localhost:8080>
+2. Click on "Chat with DeepSeek AI about this project"
+3. In the chat interface, click "Get Project Context" to allow the AI to scan and understand your codebase
+4. Type your questions in the chat box and receive AI-powered responses
+
+### Features of the AI Chat Interface
+
+- Code-aware context: The AI understands your project structure and can reference specific files
+- Code formatting: Code snippets in responses are properly formatted with syntax highlighting
+- Project structure scanning: Automatically builds context from your codebase
+- Real-time interaction: Immediate responses to your questions about the project
 
 ## 🚀 Example Usage
 
@@ -432,3 +475,84 @@ if (fd == -1) {
     // Handle the error appropriately
 }
 ```
+
+## 🧠 AI Integration
+
+This project integrates DeepSeek's AI capabilities to provide contextual assistance for developers working with the system call library.
+
+### AI Features
+
+- **Contextual Understanding**: The AI can scan your project structure and understand the relationships between different components
+- **Code Assistance**: Get help with implementation details, debugging, and understanding complex system calls
+- **Interactive Chat**: Natural language interface to ask questions about the codebase
+- **Project Context**: The AI maintains context about your specific project during the conversation
+
+### API Configuration
+
+To use the DeepSeek AI features, you need to:
+
+1. Obtain an API key from DeepSeek
+2. Create a `.env` file in your project root or data directory with the following content:
+
+   ```
+   DEEPSEEK_API_KEY=your_api_key_here
+   ```
+
+### API Functions
+
+The AI integration provides several functions that can be used in your own applications:
+
+```c
+// Initialize AI with API key
+bool ai_init(const char *api_key);
+
+// Initialize AI from .env file
+bool ai_init_from_env_file(const char *env_file_path);
+
+// Generate text using DeepSeek AI
+char *ai_generate_text(const char *prompt, const char *model_name);
+
+// Clean up AI resources
+void ai_cleanup(void);
+
+// Set AI response randomness (0.0-1.0)
+void ai_set_temperature(float temp);
+```
+
+### Example AI Integration
+
+```c
+#include "ai_integration.h"
+#include <stdio.h>
+
+int main() {
+    // Initialize AI from environment file
+    if (!ai_init_from_env_file(NULL)) {
+        fprintf(stderr, "Failed to initialize AI\n");
+        return 1;
+    }
+
+    // Generate text with DeepSeek
+    char *response = ai_generate_text(
+        "Explain how the sys_open function works", NULL);
+
+    if (response) {
+        printf("AI Response:\n%s\n", response);
+        free(response);
+    }
+
+    // Clean up
+    ai_cleanup();
+    return 0;
+}
+```
+
+### Web Interface
+
+The AI capabilities are also available through the built-in web interface:
+
+1. Navigate to <http://ip-web-server:8080/deepseek-chat> in your browser
+2. Click "Chat with DeepSeek AI about this project"
+3. Use the chat interface to ask questions about your code
+
+This interface is particularly useful for exploring the functionality of the system call library and understanding how different parts work together.
